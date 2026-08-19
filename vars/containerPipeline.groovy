@@ -44,6 +44,13 @@ def call(Map args = [:]) {
                 gitSha = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
                 echo "Checked out: ${appRepoUrl} @ ${branchName} (${gitSha})"
 
+                def prNumber = env.pr_num ?: args.get('pr_num') ?: ''
+                if (prNumber && prNumber.toString() != '0' && prNumber.toString() != '') {
+                    currentBuild.displayName = "#${BUILD_NUMBER} - PR #${prNumber} (${gitSha})"
+                } else {
+                    currentBuild.displayName = "#${BUILD_NUMBER} (${gitSha})"
+                }
+
                 // Konfigurasi terpusat dari parameter Jenkins Job
                 Map combinedConfig = new HashMap(args)
 
@@ -79,7 +86,8 @@ def call(Map args = [:]) {
                     buildAndPush(cfg, gitSha)
                 }
                 stage('Update GitOps') {
-                    updateGitops(cfg, gitSha)
+                    def prNumber = env.pr_num ?: args.get('pr_num') ?: ''
+                    updateGitops(cfg, gitSha, prNumber.toString())
                 }
             } else {
                 echo "Branch '${branchName}' != build branch '${cfg.buildBranch}'. Skip build."

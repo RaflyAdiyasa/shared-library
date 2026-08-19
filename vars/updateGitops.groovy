@@ -12,10 +12,11 @@ import com.course.PipelineConfig
  * Format image di patch/rollout.yaml:
  *   image: REGISTRY/APP:TAG  # <- CI replaces this line
  */
-def call(PipelineConfig cfg, String gitSha) {
+def call(PipelineConfig cfg, String gitSha, String prNum = '') {
     def fullImage = "${cfg.imageName()}:${gitSha}"
     def rolloutFile = cfg.gitopsRolloutFile ?: 'rollout.yaml'
     def rolloutPath = "${cfg.gitopsPath}/${rolloutFile}"
+    def prSuffix = (prNum && prNum != '0') ? " (PR #${prNum})" : ""
 
     lock('gitops') {
         withCredentials([usernamePassword(
@@ -46,7 +47,7 @@ def call(PipelineConfig cfg, String gitSha) {
                         git config user.email "jenkins@course.local"
                         git config user.name "jenkins-ci"
                         git add ${rolloutPath}
-                        git diff --cached --quiet || git commit -m "ci: ${cfg.appName} image -> ${gitSha} [skip ci]"
+                        git diff --cached --quiet || git commit -m "ci: ${cfg.appName} image -> ${gitSha}${prSuffix} [skip ci]"
                         git pull --rebase https://\${GIT_USER}:\${GIT_TOKEN}@${cfg.gitopsRepoUrl} ${cfg.gitopsBranch}
                         git push https://\${GIT_USER}:\${GIT_TOKEN}@${cfg.gitopsRepoUrl} HEAD:${cfg.gitopsBranch}
                     """
