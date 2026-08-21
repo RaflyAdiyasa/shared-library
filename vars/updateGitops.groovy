@@ -3,19 +3,18 @@ import com.course.PipelineConfig
 /**
  * updateGitops — perbarui image tag di repo GitOps, commit & push.
  *
- * Karena Kustomize images transformer tidak bekerja untuk CRD Rollout,
- * CI update image langsung di patch/rollout.yaml menggunakan sed.
+ * CI update image langsung di patch/deployment.yaml menggunakan sed.
  *
  * Pola dari produksi: lock('gitops') + rebase retry agar aman dari race condition.
- * ArgoCD mendeteksi perubahan commit → trigger sync → Argo Rollouts canary.
+ * ArgoCD mendeteksi perubahan commit → trigger sync → deploy.
  *
- * Format image di patch/rollout.yaml:
- *   image: REGISTRY/APP:TAG  # <- CI replaces this line
+ * Format image di patch/deployment.yaml:
+ *   image: DOCKERHUB_USER/APP:TAG  # <- CI replaces this line
  */
-def call(PipelineConfig cfg, String gitSha, String prNum = '') {
-    def fullImage = "${cfg.imageName()}:${gitSha}"
-    def rolloutFile = cfg.gitopsRolloutFile ?: 'rollout.yaml'
-    def rolloutPath = "${cfg.gitopsPath}/${rolloutFile}"
+def call(PipelineConfig cfg, String buildNumber, String prNum = '') {
+    def fullImage = "${cfg.imageName()}:${buildNumber}"
+    def deployFile = cfg.gitopsDeployFile ?: 'deployment.yaml'
+    def deployPath = "${cfg.gitopsPath}/patch/${deployFile}"
     def prSuffix = (prNum && prNum != '0') ? " (PR #${prNum})" : ""
 
     lock('gitops') {
@@ -33,21 +32,21 @@ def call(PipelineConfig cfg, String gitSha, String prNum = '') {
                           https://\${GIT_USER}:\${GIT_TOKEN}@${cfg.gitopsRepoUrl} .
                     """
 
-                    // Update image di patch/rollout.yaml menggunakan sed
+                    // Update image di patch/deployment.yaml menggunakan sed
                     // Matches: "image: <anything>" di dalam containers[] block
                     sh """
-                        sed -i 's|image:.*docker.pkg.dev.*|image: ${fullImage}|g' ${rolloutPath}
+                        sed -i 's|image:.*|image: ${fullImage}|g' ${deployPath}
                     """
 
                     // Verifikasi update
-                    sh "grep 'image:' ${rolloutPath}"
+                    sh "grep 'image:' ${deployPath}"
 
                     // Commit + push dengan rebase untuk avoid race condition
                     sh """
                         git config user.email "jenkins@course.local"
                         git config user.name "jenkins-ci"
-                        git add ${rolloutPath}
-                        git diff --cached --quiet || git commit -m "ci: ${cfg.appName} image -> ${gitSha}${prSuffix} [skip ci]"
+                        git add ${deployPath}
+                        git diff --cached --quiet || git commit -m "ci: ${cfg.appName} image -> build #${buildNumber}${prSuffix} [skip ci]"
                         git pull --rebase https://\${GIT_USER}:\${GIT_TOKEN}@${cfg.gitopsRepoUrl} ${cfg.gitopsBranch}
                         git push https://\${GIT_USER}:\${GIT_TOKEN}@${cfg.gitopsRepoUrl} HEAD:${cfg.gitopsBranch}
                     """
@@ -55,6 +54,6 @@ def call(PipelineConfig cfg, String gitSha, String prNum = '') {
             }
         }
     }
-    echo "GitOps updated: ${rolloutPath} -> ${fullImage}"
-    echo "ArgoCD akan detect commit ini dan trigger Rollout canary deployment."
+    echo "GitOps updated: ${deployPath} -> ${fullImage}"
+    echo "ArgoCD akan detect commit ini dan trigger deployment."
 }

@@ -83,11 +83,11 @@ def call(Map args = [:]) {
             // Build & push hanya untuk branch yang sesuai build.branch
             if (branchName == cfg.buildBranch) {
                 stage('Build & Push') {
-                    buildAndPush(cfg, gitSha)
+                    buildAndPush(cfg, env.BUILD_NUMBER)
                 }
                 stage('Update GitOps') {
                     def prNumber = env.pr_num ?: args.get('pr_num') ?: ''
-                    updateGitops(cfg, gitSha, prNumber.toString())
+                    updateGitops(cfg, env.BUILD_NUMBER, prNumber.toString())
                 }
             } else {
                 echo "Branch '${branchName}' != build branch '${cfg.buildBranch}'. Skip build."

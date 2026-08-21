@@ -19,7 +19,7 @@ class PipelineConfig implements Serializable {
     String gitopsRepoUrl
     String gitopsBranch
     String gitopsPath
-    String gitopsRolloutFile
+    String gitopsDeployFile   // default: deployment.yaml (was rolloutFile)
 
     String buildTool      // docker | kaniko
     String buildBranch
@@ -27,6 +27,7 @@ class PipelineConfig implements Serializable {
     String slackChannel
     String agentLabel
     Boolean enableSecurityScan
+    String kindClusterName    // KinD cluster name for image loading
 
     /**
      * Bangun config dari Map parameter Jenkins Job atau file YAML.
@@ -66,12 +67,12 @@ class PipelineConfig implements Serializable {
             cfg.gitopsRepoUrl     = gitops.get('repo_url') ?: gitops.get('repoUrl', '')
             cfg.gitopsBranch      = gitops.get('branch', 'main')
             cfg.gitopsPath        = gitops.get('path', '')
-            cfg.gitopsRolloutFile = gitops.get('rollout_file', 'rollout.yaml')
+            cfg.gitopsDeployFile  = gitops.get('deploy_file', 'deployment.yaml')
         } else {
             cfg.gitopsRepoUrl     = raw.get('gitopsRepoUrl') ?: raw.get('gitopsRepo', '')
             cfg.gitopsBranch      = raw.get('gitopsBranch', 'main')
             cfg.gitopsPath        = raw.get('gitopsPath', '')
-            cfg.gitopsRolloutFile = raw.get('gitopsRolloutFile', 'rollout.yaml')
+            cfg.gitopsDeployFile  = raw.get('gitopsDeployFile', 'deployment.yaml')
         }
 
         def build = raw.get('build')
@@ -91,6 +92,7 @@ class PipelineConfig implements Serializable {
         }
 
         cfg.agentLabel = raw.get('agentLabel') ?: raw.get('agent_label', 'built-in')
+        cfg.kindClusterName = raw.get('kindClusterName') ?: raw.get('kind_cluster_name', 'devops-local-cluster')
         return cfg
     }
 
@@ -102,6 +104,7 @@ class PipelineConfig implements Serializable {
         if (registryRegion && registryProject) {
             return "${registryRegion}-docker.pkg.dev/${registryProject}/${registryRepository}/${appName}"
         }
+        // Default: Docker Hub format (username/appName) — set via customImageName atau appName
         return appName
     }
 }

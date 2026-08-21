@@ -1,20 +1,19 @@
 import com.course.PipelineConfig
 
 /**
- * buildAndPush — build & push image ke Google Artifact Registry.
+ * buildAndPush — build & push image ke Docker Hub + load ke KinD.
  *
  * Mode:
  * - docker (default untuk VM agent): docker build + docker push
- * - kaniko: untuk K8s agent (rootless, tanpa Docker daemon, AD-13)
+ * - kaniko: untuk K8s agent (rootless, tanpa Docker daemon)
  *
- * Auth ke GCP Artifact Registry:
- * - VM dengan GCP service account: `gcloud auth configure-docker REGION-docker.pkg.dev`
- * - Atau via Docker credential helper: docker-credential-gcr
+ * Auth ke Docker Hub:
+ * - Credentials 'dockerhub-credentials' (username/password) di Jenkins
  *
- * Tag = git short SHA (immutable, traceable, AD-14)
+ * Tag = Jenkins BUILD_NUMBER (sequential, traceable)
  */
-def call(PipelineConfig cfg, String gitSha) {
-    def image = "${cfg.imageName()}:${gitSha}"
+def call(PipelineConfig cfg, String buildNumber) {
+    def image = "${cfg.imageName()}:${buildNumber}"
     def latestImage = "${cfg.imageName()}:latest"
 
     if (cfg.buildTool == 'kaniko') {
@@ -31,12 +30,16 @@ def call(PipelineConfig cfg, String gitSha) {
               --cache=true
         """
     } else {
-        // Docker mode — pastikan VM Jenkins punya docker + akses GCP Artifact Registry
+        // Docker mode — push ke Docker Hub
         echo "Building dengan Docker: ${image}"
 
-        // Konfigurasi auth ke GCP Artifact Registry (region-docker.pkg.dev)
-        // Requires: gcloud CLI + service account dengan roles/artifactregistry.writer
-        sh "gcloud auth configure-docker ${cfg.registryRegion}-docker.pkg.dev --quiet"
+        withCredentials([usernamePassword(
+            credentialsId: 'dockerhub-credentials',
+            usernameVariable: 'DOCKER_USER',
+            passwordVariable: 'DOCKER_PASS'
+        )]) {
+            sh 'echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin'
+        }
 
         sh "docker build -t ${image} -t ${latestImage} ."
 
@@ -46,6 +49,10 @@ def call(PipelineConfig cfg, String gitSha) {
 
         sh "docker push ${image}"
         sh "docker push ${latestImage}"
+
+        // Load ke KinD cluster (agar pod tidak perlu pull dari registry)
+        def kindCluster = cfg.kindClusterName ?: 'devops-local-cluster'
+        sh "kind load docker-image ${image} --name ${kindCluster} || echo 'KinD load skipped (cluster not found)'"
     }
 
     echo "Image pushed: ${image}"
