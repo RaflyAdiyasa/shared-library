@@ -12,8 +12,8 @@ def call(Map args = [:]) {
     def failOnVuln = args.get('failOnVuln', true)
     def exitCode   = failOnVuln ? "1" : "0"
 
-    // Gunakan direktori cache persisten di VM Jenkins agar scan lebih cepat pada run berikutnya
-    def cacheVolume = "-v \$HOME/.cache/trivy:/root/.cache/"
+    // Named volume untuk cache Trivy (persist antar scan, kompatibel shared Docker socket)
+    def cacheVolume = "-v trivy-cache:/root/.cache/"
 
     if (type == 'fs') {
         echo "=== [DevSecOps] Memulai Trivy FileSystem, Secrets, & IaC Scan ==="
