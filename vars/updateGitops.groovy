@@ -17,6 +17,8 @@ def call(PipelineConfig cfg, String buildNumber, String prNum = '') {
     def deployPath = "${cfg.gitopsPath}/patch/${deployFile}"
     def prSuffix = (prNum && prNum != '0') ? " (PR #${prNum})" : ""
 
+    def repoHost = cfg.gitopsRepoUrl.replaceFirst('https://', '')
+
     lock('gitops') {
         withCredentials([usernamePassword(
             credentialsId: 'github-jenkins-token',
@@ -29,7 +31,7 @@ def call(PipelineConfig cfg, String buildNumber, String prNum = '') {
                     // Clone repo GitOps
                     sh """
                         git clone --depth=1 --branch ${cfg.gitopsBranch} \
-                          https://\${GIT_USER}:\${GIT_TOKEN}@${cfg.gitopsRepoUrl} .
+                          https://\${GIT_USER}:\${GIT_TOKEN}@${repoHost} .
                     """
 
                     // Update image di patch/deployment.yaml menggunakan sed
@@ -47,8 +49,8 @@ def call(PipelineConfig cfg, String buildNumber, String prNum = '') {
                         git config user.name "jenkins-ci"
                         git add ${deployPath}
                         git diff --cached --quiet || git commit -m "ci: ${cfg.appName} image -> build #${buildNumber}${prSuffix} [skip ci]"
-                        git pull --rebase https://\${GIT_USER}:\${GIT_TOKEN}@${cfg.gitopsRepoUrl} ${cfg.gitopsBranch}
-                        git push https://\${GIT_USER}:\${GIT_TOKEN}@${cfg.gitopsRepoUrl} HEAD:${cfg.gitopsBranch}
+                        git pull --rebase https://\${GIT_USER}:\${GIT_TOKEN}@${repoHost} ${cfg.gitopsBranch}
+                        git push https://\${GIT_USER}:\${GIT_TOKEN}@${repoHost} HEAD:${cfg.gitopsBranch}
                     """
                 }
             }
