@@ -30,9 +30,9 @@ def call(PipelineConfig cfg, String buildNumber) {
         """
     } else {
         // Docker mode — build di host Docker via shared socket
-        echo "Building dengan Docker: ${image}"
+        echo "Building dengan Docker (BuildKit enabled): ${image}"
 
-        sh "docker build -t ${image} ."
+        sh "DOCKER_BUILDKIT=1 docker build -t ${image} ."
 
         if (cfg.enableSecurityScan) {
             trivyScan(type: 'image', target: image, failOnVuln: true)
