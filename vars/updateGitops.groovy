@@ -14,7 +14,7 @@ import com.course.PipelineConfig
 def call(PipelineConfig cfg, String buildNumber, String prNum = '') {
     def fullImage = "${cfg.imageName()}:${buildNumber}"
     def deployFile = cfg.gitopsDeployFile ?: 'deployment.yaml'
-    def deployPath = "${cfg.gitopsPath}/patch/${deployFile}"
+    def deployPath = "${cfg.gitopsPath}/${deployFile}"
     def prSuffix = (prNum && prNum != '0') ? " (PR #${prNum})" : ""
 
     def repoHost = cfg.gitopsRepoUrl.replaceFirst('https://', '')
@@ -26,8 +26,10 @@ def call(PipelineConfig cfg, String buildNumber, String prNum = '') {
             passwordVariable: 'GIT_TOKEN'
         )]) {
             dir('gitops-update') {
+                
                 deleteDir()
-                retry(3) {
+                    retry(3) {
+                    
                     // Clone repo GitOps
                     sh """
                         git clone --depth=1 --branch ${cfg.gitopsBranch} \
