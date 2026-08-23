@@ -32,7 +32,16 @@ def call(PipelineConfig cfg, String buildNumber) {
         // Docker mode — build di host Docker via shared socket
         echo "Building dengan Docker (BuildKit enabled): ${image}"
 
-        sh "DOCKER_BUILDKIT=1 docker build -t ${image} ."
+        def gitSha = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+        def gitMsg = sh(script: 'git log -1 --pretty=%s', returnStdout: true).trim().replace('"', '\\"')
+
+        sh """
+            DOCKER_BUILDKIT=1 docker build \
+              --build-arg BUILD_NUMBER=${buildNumber} \
+              --build-arg COMMIT_SHA=${gitSha} \
+              --build-arg "COMMIT_MESSAGE=${gitMsg}" \
+              -t ${image} .
+        """
 
         if (cfg.enableSecurityScan) {
             trivyScan(type: 'image', target: image, failOnVuln: true)
