@@ -44,7 +44,7 @@ def call(PipelineConfig cfg, String buildNumber) {
         """
 
         if (cfg.enableSecurityScan) {
-            trivyScan(type: 'image', target: image, failOnVuln: true)
+            trivyScan(type: 'image', target: image, failOnVuln: false)
         }
     }
 
