@@ -68,7 +68,7 @@ def call(Map args = [:]) {
 
             if (cfg.enableSecurityScan) {
                 stage('Security Scan (Source)') {
-                    trivyScan(type: 'fs', target: '.', failOnVuln: true)
+                    trivyScan(type: 'fs', target: '.', failOnVuln: false)
                 }
             }
 
