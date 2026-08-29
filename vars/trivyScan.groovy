@@ -12,6 +12,11 @@ def call(Map args = [:]) {
     def failOnVuln = args.get('failOnVuln', true)
     def exitCode   = failOnVuln ? "1" : "0"
 
+    echo "DEBUG type       = ${type}"
+    echo "DEBUG target     = ${target}"
+    echo "DEBUG failOnVuln  = ${failOnVuln}"
+    echo "DEBUG exitCode   = ${exitCode}"
+
     // Named volume untuk cache Trivy (persist antar scan, kompatibel shared Docker socket)
     def cacheVolume = "-v trivy-cache:/root/.cache/"
 
