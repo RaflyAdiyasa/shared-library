@@ -72,13 +72,13 @@ def call(Map args = [:]) {
                 }
             }
 
-            // stage('Test') {
-            //     if (cfg.testCommand?.trim()) {
-            //         sh cfg.testCommand
-            //     } else {
-            //         echo 'Tidak ada test.command di pipeline.yaml — dilewati.'
-            //     }
-            // }
+            stage('Test') {
+                if (cfg.testCommand?.trim()) {
+                    sh cfg.testCommand
+                } else {
+                    echo 'Tidak ada test.command di pipeline.yaml — dilewati.'
+                }
+            }
 
             // Build & push hanya untuk branch yang sesuai build.branch
             if (branchName == cfg.buildBranch) {
