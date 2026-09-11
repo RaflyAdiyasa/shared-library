@@ -57,9 +57,9 @@ def call(PipelineConfig cfg, String buildNumber) {
 
 
     // Load image ke KinD cluster (shared Docker socket = kind bisa akses)
-    def kindCluster = cfg.kindClusterName ?: 'devops-local-cluster'
-    sh "kind load docker-image ${image} --name ${kindCluster}"
+    // def kindCluster = cfg.kindClusterName ?: 'devops-local-cluster'
+    // sh "kind load docker-image ${image} --name ${kindCluster}"
 
-    echo "Image loaded to KinD: ${image}"
+    // echo "Image loaded to KinD: ${image}"
     return image
 }
