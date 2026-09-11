@@ -22,6 +22,7 @@ import com.course.PipelineConfig
 def call(Map args = [:]) {
     def appRepoUrl  = args.get('appRepoUrl') ?: env.APP_REPO_URL ?: env.GIT_URL
     def configPath  = args.get('configPath', '.cicd/pipeline.yaml')
+    def credentialsId = args.get('credentialsId', 'github-jenkins-token') 
     def cfg         = null
     def gitSha      = null
     def branchName  = null
@@ -38,7 +39,7 @@ def call(Map args = [:]) {
                 branchName = env.pr_base_branch ?: args.get('buildBranch') ?: 'development'
 
                 git branch: branchName,
-                    credentialsId: 'github-jenkins-token',
+                    credentialsId: "${credentialsId}",
                     url: appRepoUrl
 
                 gitSha = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()

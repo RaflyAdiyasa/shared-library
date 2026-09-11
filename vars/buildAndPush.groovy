@@ -13,7 +13,8 @@ import com.course.PipelineConfig
  * Tag = Jenkins BUILD_NUMBER (sequential, traceable)
  */
 def call(PipelineConfig cfg, String buildNumber) {
-    def image = "${cfg.imageName()}:${buildNumber}"
+    def gitSha = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+    def image = "${cfg.imageName()}:${gitSha}"
 
     if (cfg.buildTool == 'kaniko') {
         echo "Building dengan Kaniko: ${image}"
@@ -32,7 +33,7 @@ def call(PipelineConfig cfg, String buildNumber) {
         // Docker mode — build di host Docker via shared socket
         echo "Building dengan Docker (BuildKit enabled): ${image}"
 
-        def gitSha = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+
         def gitMsg = sh(script: 'git log -1 --pretty=%s', returnStdout: true).trim().replace('"', '\\"')
 
         sh """
