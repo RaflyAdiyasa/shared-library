@@ -85,7 +85,7 @@ class PipelineConfig implements Serializable {
         } else {
             cfg.buildTool   = raw.get('buildTool', 'docker')
             cfg.buildBranch = raw.get('buildBranch', 'development')
-            cfg.dockerHubCredID = build.get('dockerHubCredID', 'dockerhub-credentials')
+            cfg.dockerHubCredID = raw.get('dockerHubCredID', 'dockerhub-credentials')
         }
 
         def slack = raw.get('slack')
