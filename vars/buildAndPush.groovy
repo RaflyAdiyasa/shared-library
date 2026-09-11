@@ -14,7 +14,7 @@ import com.course.PipelineConfig
  */
 def call(PipelineConfig cfg, String buildNumber) {
     def gitSha = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-    def image = "${cfg.imageName()}:${gitSha}"
+    def image = "${cfg.imageName()}:${buildNumber}"
 
     if (cfg.buildTool == 'kaniko') {
         echo "Building dengan Kaniko: ${image}"

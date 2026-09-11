@@ -39,7 +39,7 @@ def call(PipelineConfig cfg, String buildNumber, String prNum = '') {
                     // Update image di patch/deployment.yaml menggunakan sed
                     // Matches: "image: <anything>" di dalam containers[] block
                     sh """
-                        sed -i 's|image:.*|image: ${fullImage}|g' ${deployPath}
+                        yq -i '(.spec.template.spec.containers[] | select(.name == "api") | .image) = "'"${fullImage}"'"' ${deployPath}
                     """
 
                     // Verifikasi update
