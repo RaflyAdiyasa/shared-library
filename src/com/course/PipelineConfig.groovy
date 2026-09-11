@@ -29,6 +29,8 @@ class PipelineConfig implements Serializable {
     Boolean enableSecurityScan
     String kindClusterName    // KinD cluster name for image loading
 
+    String dockerHubCredID
+
     /**
      * Bangun config dari Map parameter Jenkins Job atau file YAML.
      */
@@ -79,9 +81,11 @@ class PipelineConfig implements Serializable {
         if (build instanceof Map) {
             cfg.buildTool   = build.get('tool', 'docker')
             cfg.buildBranch = build.get('branch', 'development')
+            cfg.dockerHubCredID = build.get('dockerHubCredID', 'dockerhub-credentials')
         } else {
             cfg.buildTool   = raw.get('buildTool', 'docker')
             cfg.buildBranch = raw.get('buildBranch', 'development')
+            cfg.dockerHubCredID = build.get('dockerHubCredID', 'dockerhub-credentials')
         }
 
         def slack = raw.get('slack')

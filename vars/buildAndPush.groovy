@@ -48,6 +48,13 @@ def call(PipelineConfig cfg, String buildNumber) {
         }
     }
 
+    withDockerRegistry(credentialsId: cfg.dockerHubCredID ) {
+        sh "docker push ${image}"
+    }
+        echo "Image loaded to Dockerhub: ${image}"
+
+
+
     // Load image ke KinD cluster (shared Docker socket = kind bisa akses)
     def kindCluster = cfg.kindClusterName ?: 'devops-local-cluster'
     sh "kind load docker-image ${image} --name ${kindCluster}"
