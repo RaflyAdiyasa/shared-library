@@ -1,11 +1,4 @@
-/**
- * trivyScan — Menjalankan pemindaian keamanan menggunakan Trivy (Docker-based).
- *
- * Params:
- *   type       : tipe scanning ('fs' untuk source/dependencies/secrets, 'image' untuk Docker image)
- *   target     : direktori target (untuk 'fs', default: '.') atau tag image (untuk 'image')
- *   failOnVuln : jika true, pipeline akan gagal jika ditemukan celah HIGH atau CRITICAL (exit-code 1)
- */
+
 def call(Map args = [:]) {
     def type       = args.get('type', 'fs')
     def target     = args.get('target', '.')
@@ -17,12 +10,11 @@ def call(Map args = [:]) {
     echo "DEBUG failOnVuln  = ${failOnVuln}"
     echo "DEBUG exitCode   = ${exitCode}"
 
-    // Named volume untuk cache Trivy (persist antar scan, kompatibel shared Docker socket)
+  
     def cacheVolume = "-v trivy-cache:/root/.cache/"
 
     if (type == 'fs') {
         echo "=== [DevSecOps] Memulai Trivy FileSystem, Secrets, & IaC Scan ==="
-        // Scan filesystem untuk vulnerability (SCA), secret leak, dan miskonfigurasi IaC
         sh """
             docker run --rm \
               -v \$(pwd):/workspace \

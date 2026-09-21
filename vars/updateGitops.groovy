@@ -1,16 +1,5 @@
 import com.course.PipelineConfig
 
-/**
- * updateGitops — perbarui image tag di repo GitOps, commit & push.
- *
- * CI update image langsung di patch/deployment.yaml menggunakan sed.
- *
- * Pola dari produksi: lock('gitops') + rebase retry agar aman dari race condition.
- * ArgoCD mendeteksi perubahan commit → trigger sync → deploy.
- *
- * Format image di patch/deployment.yaml:
- *   image: DOCKERHUB_USER/APP:TAG  # <- CI replaces this line
- */
 def call(PipelineConfig cfg, String buildNumber, String prNum = '') {
     def fullImage = "${cfg.imageName()}:${buildNumber}"
     def deployFile = cfg.gitopsDeployFile ?: 'deployment.yaml'

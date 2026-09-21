@@ -1,10 +1,5 @@
 package com.course
 
-/**
- * PipelineConfig — config-as-data.
- * Mendukung konfigurasi terpusat langsung dari parameter Jenkins Job UI,
- * tanpa mewajibkan file .cicd/pipeline.yaml di repositori developer.
- */
 class PipelineConfig implements Serializable {
 
     String appName
@@ -37,9 +32,9 @@ class PipelineConfig implements Serializable {
     String sonarqubeKeyID
     String sonarExclusions
 
-    /**
-     * Bangun config dari Map parameter Jenkins Job atau file YAML.
-     */
+    String sonarQualityGateTimeoutMinutes
+    Boolean sonarQualityGateAbortPipeline
+
     static PipelineConfig fromMap(Map raw) {
         if (raw == null) {
             raw = [:]
@@ -96,17 +91,21 @@ class PipelineConfig implements Serializable {
 
         def sonar = raw.get('sonar')
         if (sonar instanceof Map){
-            cfg.sonarProjectKey     = build.get('sonarProjectKey','Learn')
-            cfg.sonarProjectName    = build.get('sonarProjectName','Learn')
-            cfg.sonarSources        = build.get('sonarSources','.')
-            cfg.sonarqubeKeyID      = build.get('sonarqubeKeyID','sonarqube')
-            cfg.sonarExclusions     = build.get('sonarExclusions','')
+            cfg.sonarProjectKey     = sonar.get('sonarProjectKey','Learn')
+            cfg.sonarProjectName    = sonar.get('sonarProjectName','Learn')
+            cfg.sonarSources        = sonar.get('sonarSources','.')
+            cfg.sonarqubeKeyID      = sonar.get('sonarqubeKeyID','sonarqube')
+            cfg.sonarExclusions     = sonar.get('sonarExclusions','')
+            cfg.sonarQualityGateTimeoutMinutes = sonar.get('sonarQualityGateTimeoutMinutes','5')
+            cfg.sonarQualityGateAbortPipeline = sonar.get('sonarQualityGateAbortPipeline', true) as Boolean
         } else {
             cfg.sonarProjectKey     = raw.get('sonarProjectKey','Learn')
             cfg.sonarProjectName    = raw.get('sonarProjectName','Learn')
             cfg.sonarSources        = raw.get('sonarSources','.')
             cfg.sonarqubeKeyID      = raw.get('sonarqubeKeyID','sonarqube')
             cfg.sonarExclusions     = raw.get('sonarExclusions','')
+            cfg.sonarQualityGateTimeoutMinutes = raw.get('sonarQualityGateTimeoutMinutes','5')      
+            cfg.sonarQualityGateAbortPipeline = raw.get('sonarQualityGateAbortPipeline', true) as Boolean
         }
 
         def slack = raw.get('slack')
@@ -121,7 +120,6 @@ class PipelineConfig implements Serializable {
         return cfg
     }
 
-    /** Full image name (tanpa tag). */
     String imageName() {
         if (customImageName) {
             return customImageName
@@ -129,7 +127,7 @@ class PipelineConfig implements Serializable {
         if (registryRegion && registryProject) {
             return "${registryRegion}-docker.pkg.dev/${registryProject}/${registryRepository}/${appName}"
         }
-        // Default: Docker Hub format (username/appName) — set via customImageName atau appName
+        
         return appName
     }
 }

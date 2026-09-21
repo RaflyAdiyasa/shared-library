@@ -1,17 +1,5 @@
 import com.course.PipelineConfig
 
-/**
- * buildAndPush — build image lokal & load ke KinD cluster.
- *
- * Flow (Local Track):
- * 1. docker build — build image di host Docker (via shared socket)
- * 2. kind load   — load image ke KinD cluster containerd
- *
- * Tidak perlu push ke Docker Hub karena KinD bisa pakai image lokal
- * dengan imagePullPolicy: IfNotPresent.
- *
- * Tag = Jenkins BUILD_NUMBER (sequential, traceable)
- */
 def call(PipelineConfig cfg, String buildNumber) {
     def gitSha = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
     def image = "${cfg.imageName()}:${buildNumber}"

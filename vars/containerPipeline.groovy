@@ -1,24 +1,5 @@
 import com.course.PipelineConfig
 
-/**
- * containerPipeline — entry point shared library untuk Pipeline job biasa (bukan Multibranch).
- *
- * Cara pakai dari Jenkins Pipeline script (inline di UI):
- *   @Library('course-shared-library') _
- *   containerPipeline(
- *       appRepoUrl: 'https://github.com/ORG/backend-go.git',
- *       configPath: '.cicd/pipeline.yaml'  // path relatif di dalam repo app
- *   )
- *
- * Flow:
- *   1. Checkout repo app (appRepoUrl) ke branch dari webhook param pr_base_branch
- *   2. Baca .cicd/pipeline.yaml dari workspace
- *   3. Test → Build & Push → Update GitOps → Notify Slack
- *
- * Params:
- *   appRepoUrl  : URL repo aplikasi (wajib — karena repo terpisah dari shared library)
- *   configPath  : path ke pipeline.yaml di dalam repo app (default: .cicd/pipeline.yaml)
- */
 def call(Map args = [:]) {
     def appRepoUrl  = args.get('appRepoUrl') ?: env.APP_REPO_URL ?: env.GIT_URL
     def configPath  = args.get('configPath', '.cicd/pipeline.yaml')
@@ -34,8 +15,6 @@ def call(Map args = [:]) {
     node {
         try {
             stage('Checkout App Repo') {
-                // Branch dari webhook Generic Webhook Trigger param pr_base_branch
-                // Fallback ke 'development' jika tidak ada
                 branchName = env.pr_base_branch ?: args.get('buildBranch') ?: 'development'
 
                 git branch: branchName,
@@ -52,10 +31,9 @@ def call(Map args = [:]) {
                     currentBuild.displayName = "#${BUILD_NUMBER} (${gitSha})"
                 }
 
-                // Konfigurasi terpusat dari parameter Jenkins Job
+ 
                 Map combinedConfig = new HashMap(args)
 
-                // Optional fallback jika ada file pipeline.yaml di repo app
                 if (fileExists(configPath)) {
                     def rawYaml = readYaml(file: configPath)
                     if (rawYaml) {
@@ -85,7 +63,11 @@ def call(Map args = [:]) {
                 sonarScan(cfg)
             }
 
-            // Build & push hanya untuk branch yang sesuai build.branch
+            stage('QualityGate') {
+                sonarQualityGate(cfg)
+            }
+
+
             if (branchName == cfg.buildBranch) {
                 stage('Build & Push') {
                     buildAndPush(cfg, env.BUILD_NUMBER)
