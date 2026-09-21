@@ -8,11 +8,12 @@ def call(PipelineConfig cfg) {
     def sources = cfg.sonarSources ?: '.'
     def sonarqubeKeyID = cfg.sonarqubeKeyID ?: 'sonarqube'
     def exclusions = cfg.sonarExclusions ?: ''
+    def scannerHome = tool 'sonarqube'
 
 
     withSonarQubeEnv(sonarqubeKeyID) {
         def command = """
-            sonar-scanner \
+            ${scannerHome}/bin/sonar-scanner \
               -Dsonar.projectKey=${projectKey} \
               -Dsonar.projectName=${projectName} \
               -Dsonar.sources=${sources}
