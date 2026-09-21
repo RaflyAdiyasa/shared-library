@@ -6,11 +6,11 @@ def call(PipelineConfig cfg) {
     def projectKey = cfg.sonarProjectKey
     def projectName = cfg.sonarProjectName ?: projectKey
     def sources = cfg.sonarSources ?: '.'
-    def sonarqubeKeyID = cfg.sonarqubeKeyID ?: sonarqube
+    def sonarqubeKeyID = cfg.sonarqubeKeyID ?: 'sonarqube'
     def exclusions = cfg.sonarExclusions ?: ''
 
 
-    withSonarQubeEnv('$sonarqubeKeyID') {
+    withSonarQubeEnv(sonarqubeKeyID) {
         def command = """
             sonar-scanner \
               -Dsonar.projectKey=${projectKey} \
@@ -25,4 +25,5 @@ def call(PipelineConfig cfg) {
         }
 
         sh command
+    }
 }
