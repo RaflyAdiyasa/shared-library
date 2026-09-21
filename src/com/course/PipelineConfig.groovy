@@ -31,6 +31,12 @@ class PipelineConfig implements Serializable {
 
     String dockerHubCredID
 
+    String sonarProjectKey
+    String sonarProjectName
+    String sonarSources
+    String sonarqubeKeyID
+    String sonarExclusions
+
     /**
      * Bangun config dari Map parameter Jenkins Job atau file YAML.
      */
@@ -86,6 +92,21 @@ class PipelineConfig implements Serializable {
             cfg.buildTool   = raw.get('buildTool', 'docker')
             cfg.buildBranch = raw.get('buildBranch', 'development')
             cfg.dockerHubCredID = raw.get('dockerHubCredID', 'dockerhub-credentials')
+        }
+
+        def sonar = raw.get('sonar')
+        if (sonar instanceof Map){
+            cfg.sonarProjectKey     = build.get('sonarProjectKey','Learn')
+            cfg.sonarProjectName    = build.get('sonarProjectName','Learn')
+            cfg.sonarSources        = build.get('sonarSources','.')
+            cfg.sonarqubeKeyID      = build.get('sonarqubeKeyID','sonarqube')
+            cfg.sonarExclusions     = build.get('sonarExclusions','')
+        } else {
+            cfg.sonarProjectKey     = raw.get('sonarProjectKey','Learn')
+            cfg.sonarProjectName    = raw.get('sonarProjectName','Learn')
+            cfg.sonarSources        = raw.get('sonarSources','.')
+            cfg.sonarqubeKeyID      = raw.get('sonarqubeKeyID','sonarqube')
+            cfg.sonarExclusions     = raw.get('sonarExclusions','')
         }
 
         def slack = raw.get('slack')

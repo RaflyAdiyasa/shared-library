@@ -81,6 +81,10 @@ def call(Map args = [:]) {
                 }
             }
 
+            stage('SonarScan') {
+                sonarScan(cfg)
+            }
+
             // Build & push hanya untuk branch yang sesuai build.branch
             if (branchName == cfg.buildBranch) {
                 stage('Build & Push') {
